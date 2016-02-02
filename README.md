@@ -21,6 +21,7 @@ Download zaws command line tool and Zabbix template xml file.
 Please get the binary file that is appropriate for your environment architecture.
 
 [binary file url](https://github.com/ike-dai/zaws/releases)
+
 [template xml file url](https://github.com/ike-dai/zaws/tree/master/templates/zaws_zabbix_template.xml)
 
 ## 2. Copy to Externalscripts directory
