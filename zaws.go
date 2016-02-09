@@ -213,7 +213,14 @@ func (z *Zaws) ShowELBCloudwatchMetricsList() {
 	metrics := get_metric_list(z.AwsSession, "LoadBalancerName", z.TargetId)
 	for _, metric := range metrics {
 		datapoints := get_metric_stats(z.AwsSession, "LoadBalancerName", z.TargetId, *metric.MetricName, *metric.Namespace)
-		data := Data{MetricName: *metric.MetricName, MetricNamespace: *metric.Namespace}
+		metric_name := *metric.MetricName
+		for _, dimension := range metric.Dimensions {
+			if *dimension.Name == "AvailabilityZone" {
+				metric_name = *metric.MetricName + "." + *dimension.Value
+				break
+			}
+		}
+		data := Data{MetricName: metric_name, MetricNamespace: *metric.Namespace}
 		if len(datapoints) > 0 {
 			data.MetricUnit = *datapoints[0].Unit
 		}
@@ -236,10 +243,17 @@ func (z *Zaws) SendMetricStats(identity_name string) {
 	metrics := get_metric_list(z.AwsSession, identity_name, z.TargetId)
 	for _, metric := range metrics {
 		datapoints := get_metric_stats(z.AwsSession, identity_name, z.TargetId, *metric.MetricName, *metric.Namespace)
+		metric_name := *metric.MetricName
+		for _, dimension := range metric.Dimensions {
+			if *dimension.Name == "AvailabilityZone" {
+				metric_name = *metric.MetricName + "." + *dimension.Value
+				break
+			}
+		}
 
 		if len(datapoints) > 0 {
 			data_time := *datapoints[0].Timestamp
-			send_data = append(send_data, zabbix_sender.DataItem{Hostname: z.TargetId, Key: "cloudwatch.metric[" + *metric.MetricName + "]", Value: strconv.FormatFloat(*datapoints[0].Average, 'f', 4, 64), Timestamp: data_time.Unix()})
+			send_data = append(send_data, zabbix_sender.DataItem{Hostname: z.TargetId, Key: "cloudwatch.metric[" + metric_name + "]", Value: strconv.FormatFloat(*datapoints[0].Average, 'f', 4, 64), Timestamp: data_time.Unix()})
 		}
 	}
 	addr, _ := net.ResolveTCPAddr("tcp", z.ZabbixHost+":"+z.ZabbixPort)

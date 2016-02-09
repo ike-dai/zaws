@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zabbix_export>
     <version>3.0</version>
-    <date>2016-02-02T10:23:21Z</date>
+    <date>2016-02-09T23:40:17Z</date>
     <groups>
+        <group>
+            <name>AWS EC2</name>
+        </group>
+        <group>
+            <name>AWS ELB</name>
+        </group>
         <group>
             <name>Discovered hosts</name>
         </group>
@@ -69,6 +75,11 @@
                                         <name>Discovered hosts</name>
                                     </group>
                                 </group_link>
+                                <group_link>
+                                    <group>
+                                        <name>AWS EC2</name>
+                                    </group>
+                                </group_link>
                             </group_links>
                             <group_prototypes>
                                 <group_prototype>
@@ -78,6 +89,67 @@
                             <templates>
                                 <template>
                                     <name>Template AWS EC2</name>
+                                </template>
+                            </templates>
+                        </host_prototype>
+                    </host_prototypes>
+                </discovery_rule>
+                <discovery_rule>
+                    <name>ELB discovery</name>
+                    <type>10</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>zaws[&quot;elb&quot;,&quot;list&quot;,&quot;-r&quot;,&quot;{$REGION}&quot;,&quot;-k&quot;,&quot;{$KEY}&quot;,&quot;-s&quot;,&quot;{$SECRET}&quot;]</key>
+                    <delay>300</delay>
+                    <status>0</status>
+                    <allowed_hosts/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <delay_flex/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <filter>
+                        <evaltype>0</evaltype>
+                        <formula/>
+                        <conditions/>
+                    </filter>
+                    <lifetime>30</lifetime>
+                    <description/>
+                    <item_prototypes/>
+                    <trigger_prototypes/>
+                    <graph_prototypes/>
+                    <host_prototypes>
+                        <host_prototype>
+                            <host>{#ELB.NAME}</host>
+                            <name>{#ELB.DNS.NAME}</name>
+                            <status>0</status>
+                            <group_links>
+                                <group_link>
+                                    <group>
+                                        <name>AWS ELB</name>
+                                    </group>
+                                </group_link>
+                                <group_link>
+                                    <group>
+                                        <name>Discovered hosts</name>
+                                    </group>
+                                </group_link>
+                            </group_links>
+                            <group_prototypes/>
+                            <templates>
+                                <template>
+                                    <name>Template AWS ELB</name>
                                 </template>
                             </templates>
                         </host_prototype>
@@ -94,6 +166,9 @@
             <description/>
             <groups>
                 <group>
+                    <name>AWS EC2</name>
+                </group>
+                <group>
                     <name>Templates</name>
                 </group>
             </groups>
@@ -104,12 +179,12 @@
             </applications>
             <items>
                 <item>
-                    <name>cloudwatch static monitor</name>
+                    <name>cloudwatch static monitor (EC2)</name>
                     <type>10</type>
                     <snmp_community/>
                     <multiplier>0</multiplier>
                     <snmp_oid/>
-                    <key>zaws[&quot;cloudwatch&quot;,&quot;stats&quot;,&quot;-r&quot;,&quot;{$REGION}&quot;,&quot;-k&quot;,&quot;{$KEY}&quot;,&quot;-s&quot;,&quot;{$SECRET}&quot;,&quot;-i&quot;,&quot;{HOST.HOST}&quot;,&quot;-h&quot;,&quot;localhost&quot;]</key>
+                    <key>zaws[&quot;cloudwatch&quot;,&quot;stats&quot;,&quot;ec2&quot;,&quot;-r&quot;,&quot;{$REGION}&quot;,&quot;-k&quot;,&quot;{$KEY}&quot;,&quot;-s&quot;,&quot;{$SECRET}&quot;,&quot;-i&quot;,&quot;{HOST.HOST}&quot;,&quot;-h&quot;,&quot;localhost&quot;]</key>
                     <delay>60</delay>
                     <history>90</history>
                     <trends>0</trends>
@@ -145,11 +220,157 @@
             </items>
             <discovery_rules>
                 <discovery_rule>
-                    <name>CloudWatch discovery</name>
+                    <name>CloudWatch discovery (EC2)</name>
                     <type>10</type>
                     <snmp_community/>
                     <snmp_oid/>
                     <key>zaws[&quot;cloudwatch&quot;,&quot;list&quot;,&quot;ec2&quot;,&quot;-r&quot;,&quot;{$REGION}&quot;,&quot;-k&quot;,&quot;{$KEY}&quot;,&quot;-s&quot;,&quot;{$SECRET}&quot;,&quot;-i&quot;,&quot;{HOST.HOST}&quot;]</key>
+                    <delay>120</delay>
+                    <status>0</status>
+                    <allowed_hosts/>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <delay_flex/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <filter>
+                        <evaltype>0</evaltype>
+                        <formula/>
+                        <conditions/>
+                    </filter>
+                    <lifetime>30</lifetime>
+                    <description/>
+                    <item_prototypes>
+                        <item_prototype>
+                            <name>{#METRIC.NAME} monitoring</name>
+                            <type>2</type>
+                            <snmp_community/>
+                            <multiplier>0</multiplier>
+                            <snmp_oid/>
+                            <key>cloudwatch.metric[{#METRIC.NAME}]</key>
+                            <delay>0</delay>
+                            <history>90</history>
+                            <trends>365</trends>
+                            <status>0</status>
+                            <value_type>0</value_type>
+                            <allowed_hosts/>
+                            <units>{#METRIC.UNIT}</units>
+                            <delta>0</delta>
+                            <snmpv3_contextname/>
+                            <snmpv3_securityname/>
+                            <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                            <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                            <snmpv3_authpassphrase/>
+                            <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                            <snmpv3_privpassphrase/>
+                            <formula>1</formula>
+                            <delay_flex/>
+                            <params/>
+                            <ipmi_sensor/>
+                            <data_type>0</data_type>
+                            <authtype>0</authtype>
+                            <username/>
+                            <password/>
+                            <publickey/>
+                            <privatekey/>
+                            <port/>
+                            <description/>
+                            <inventory_link>0</inventory_link>
+                            <applications/>
+                            <valuemap/>
+                            <logtimefmt/>
+                            <application_prototypes>
+                                <application_prototype>
+                                    <name>{#METRIC.NAMESPACE}</name>
+                                </application_prototype>
+                            </application_prototypes>
+                        </item_prototype>
+                    </item_prototypes>
+                    <trigger_prototypes/>
+                    <graph_prototypes/>
+                    <host_prototypes/>
+                </discovery_rule>
+            </discovery_rules>
+            <macros/>
+            <templates/>
+            <screens/>
+        </template>
+        <template>
+            <template>Template AWS ELB</template>
+            <name>Template AWS ELB</name>
+            <description/>
+            <groups>
+                <group>
+                    <name>AWS ELB</name>
+                </group>
+                <group>
+                    <name>Templates</name>
+                </group>
+            </groups>
+            <applications>
+                <application>
+                    <name>{#METRIC.NAMESPACE}</name>
+                </application>
+            </applications>
+            <items>
+                <item>
+                    <name>cloudwatch static monitor (ELB)</name>
+                    <type>10</type>
+                    <snmp_community/>
+                    <multiplier>0</multiplier>
+                    <snmp_oid/>
+                    <key>zaws[&quot;cloudwatch&quot;,&quot;stats&quot;,&quot;elb&quot;,&quot;-r&quot;,&quot;{$REGION}&quot;,&quot;-k&quot;,&quot;{$KEY}&quot;,&quot;-s&quot;,&quot;{$SECRET}&quot;,&quot;-i&quot;,&quot;{HOST.HOST}&quot;,&quot;-h&quot;,&quot;localhost&quot;]</key>
+                    <delay>60</delay>
+                    <history>90</history>
+                    <trends>0</trends>
+                    <status>0</status>
+                    <value_type>1</value_type>
+                    <allowed_hosts/>
+                    <units/>
+                    <delta>0</delta>
+                    <snmpv3_contextname/>
+                    <snmpv3_securityname/>
+                    <snmpv3_securitylevel>0</snmpv3_securitylevel>
+                    <snmpv3_authprotocol>0</snmpv3_authprotocol>
+                    <snmpv3_authpassphrase/>
+                    <snmpv3_privprotocol>0</snmpv3_privprotocol>
+                    <snmpv3_privpassphrase/>
+                    <formula>1</formula>
+                    <delay_flex/>
+                    <params/>
+                    <ipmi_sensor/>
+                    <data_type>0</data_type>
+                    <authtype>0</authtype>
+                    <username/>
+                    <password/>
+                    <publickey/>
+                    <privatekey/>
+                    <port/>
+                    <description/>
+                    <inventory_link>0</inventory_link>
+                    <applications/>
+                    <valuemap/>
+                    <logtimefmt/>
+                </item>
+            </items>
+            <discovery_rules>
+                <discovery_rule>
+                    <name>CloudWatch discovery (ELB)</name>
+                    <type>10</type>
+                    <snmp_community/>
+                    <snmp_oid/>
+                    <key>zaws[&quot;cloudwatch&quot;,&quot;list&quot;,&quot;elb&quot;,&quot;-r&quot;,&quot;{$REGION}&quot;,&quot;-k&quot;,&quot;{$KEY}&quot;,&quot;-s&quot;,&quot;{$SECRET}&quot;,&quot;-i&quot;,&quot;{HOST.HOST}&quot;]</key>
                     <delay>120</delay>
                     <status>0</status>
                     <allowed_hosts/>
