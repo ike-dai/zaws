@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/elb"
 	"net"
 	"os"
 	"strconv"
@@ -72,6 +73,8 @@ type Data struct {
 	InstanceType        string `json:"{#INSTANCE.TYPE},omitempty"`
 	InstanceId          string `json:"{#INSTANCE.ID},omitempty"`
 	InstancePrivateAddr string `json:"{#INSTANCE.PRIVATE.ADDR},omitempty"`
+	ElbName             string `json:"{#ELB.NAME},omitempty"`
+	ElbDnsName          string `json:"{#ELB.DNS.NAME},omitempty"`
 }
 
 // Common util
@@ -88,13 +91,12 @@ func convert_to_lldjson_string(data []Data) string {
 }
 
 // Access AWS API
-func get_metric_list(sess *session.Session, target_id string) []*cloudwatch.Metric {
-	var metrics []*cloudwatch.Metric
+func get_metric_list(sess *session.Session, identity_name, target_id string) []*cloudwatch.Metric {
 	svc := cloudwatch.New(sess)
 	params := &cloudwatch.ListMetricsInput{
 		Dimensions: []*cloudwatch.DimensionFilter{
 			{
-				Name:  aws.String("InstanceId"),
+				Name:  aws.String(identity_name),
 				Value: aws.String(target_id),
 			},
 		},
@@ -102,15 +104,13 @@ func get_metric_list(sess *session.Session, target_id string) []*cloudwatch.Metr
 	resp, err := svc.ListMetrics(params)
 	if err != nil {
 		fmt.Println(err.Error())
-		return metrics
+		return nil
 	}
-	metrics = resp.Metrics
-	return metrics
+	return resp.Metrics
 }
 
-func get_metric_stats(sess *session.Session, target_id, metric_name, metric_namespace string) []*cloudwatch.Datapoint {
+func get_metric_stats(sess *session.Session, identity_name, target_id, metric_name, metric_namespace string) []*cloudwatch.Datapoint {
 
-	var datapoints []*cloudwatch.Datapoint
 	svc := cloudwatch.New(sess)
 	t := time.Now()
 	input := &cloudwatch.GetMetricStatisticsInput{
@@ -122,7 +122,7 @@ func get_metric_stats(sess *session.Session, target_id, metric_name, metric_name
 		MetricName: aws.String(metric_name),
 		Dimensions: []*cloudwatch.Dimension{
 			{
-				Name:  aws.String("InstanceId"),
+				Name:  aws.String(identity_name),
 				Value: aws.String(target_id),
 			},
 		},
@@ -130,10 +130,9 @@ func get_metric_stats(sess *session.Session, target_id, metric_name, metric_name
 	value, err := svc.GetMetricStatistics(input)
 	if err != nil {
 		fmt.Println(err.Error())
-		return datapoints
+		return nil
 	}
-	datapoints = value.Datapoints
-	return datapoints
+	return value.Datapoints
 }
 
 func get_ec2_list(sess *session.Session) []*ec2.Instance {
@@ -149,6 +148,20 @@ func get_ec2_list(sess *session.Session) []*ec2.Instance {
 		instances = append(instances, reservation.Instances...)
 	}
 	return instances
+}
+
+func get_elb_list(sess *session.Session) []*elb.LoadBalancerDescription {
+	svc := elb.New(sess)
+	params := &elb.DescribeLoadBalancersInput{
+		LoadBalancerNames: []*string{},
+	}
+	resp, err := svc.DescribeLoadBalancers(params)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return nil
+	}
+	return resp.LoadBalancerDescriptions
 }
 
 // zaws method
@@ -170,11 +183,21 @@ func (z *Zaws) ShowEc2List() {
 	fmt.Printf(convert_to_lldjson_string(list))
 }
 
-func (z *Zaws) ShowCloudwatchMetricsList() {
+func (z *Zaws) ShowElbList() {
 	list := make([]Data, 0)
-	metrics := get_metric_list(z.AwsSession, z.TargetId)
+	elbs := get_elb_list(z.AwsSession)
+	for _, elb := range elbs {
+		data := Data{ElbName: *elb.LoadBalancerName, ElbDnsName: *elb.DNSName}
+		list = append(list, data)
+	}
+	fmt.Printf(convert_to_lldjson_string(list))
+}
+
+func (z *Zaws) ShowEC2CloudwatchMetricsList() {
+	list := make([]Data, 0)
+	metrics := get_metric_list(z.AwsSession, "InstanceId", z.TargetId)
 	for _, metric := range metrics {
-		datapoints := get_metric_stats(z.AwsSession, z.TargetId, *metric.MetricName, *metric.Namespace)
+		datapoints := get_metric_stats(z.AwsSession, "InstanceId", z.TargetId, *metric.MetricName, *metric.Namespace)
 		data := Data{MetricName: *metric.MetricName, MetricNamespace: *metric.Namespace}
 		if len(datapoints) > 0 {
 			data.MetricUnit = *datapoints[0].Unit
@@ -185,12 +208,34 @@ func (z *Zaws) ShowCloudwatchMetricsList() {
 	fmt.Printf(convert_to_lldjson_string(list))
 }
 
-func (z *Zaws) SendMetricStats() {
+func (z *Zaws) ShowELBCloudwatchMetricsList() {
+	list := make([]Data, 0)
+	metrics := get_metric_list(z.AwsSession, "LoadBalancerName", z.TargetId)
+	for _, metric := range metrics {
+		datapoints := get_metric_stats(z.AwsSession, "LoadBalancerName", z.TargetId, *metric.MetricName, *metric.Namespace)
+		data := Data{MetricName: *metric.MetricName, MetricNamespace: *metric.Namespace}
+		if len(datapoints) > 0 {
+			data.MetricUnit = *datapoints[0].Unit
+		}
+		list = append(list, data)
+	}
+
+	fmt.Printf(convert_to_lldjson_string(list))
+}
+
+func (z *Zaws) SendEc2MetricStats() {
+	z.SendMetricStats("InstanceId")
+}
+func (z *Zaws) SendElbMetricStats() {
+	z.SendMetricStats("LoadBalancerName")
+}
+
+func (z *Zaws) SendMetricStats(identity_name string) {
 	var send_data []zabbix_sender.DataItem
 
-	metrics := get_metric_list(z.AwsSession, z.TargetId)
+	metrics := get_metric_list(z.AwsSession, identity_name, z.TargetId)
 	for _, metric := range metrics {
-		datapoints := get_metric_stats(z.AwsSession, z.TargetId, *metric.MetricName, *metric.Namespace)
+		datapoints := get_metric_stats(z.AwsSession, identity_name, z.TargetId, *metric.MetricName, *metric.Namespace)
 
 		if len(datapoints) > 0 {
 			data_time := *datapoints[0].Timestamp
@@ -220,6 +265,15 @@ func main() {
 		default:
 			usage()
 		}
+	case "elb":
+		switch os.Args[2] {
+		case "list":
+			os.Args = os.Args[2:]
+			zaws := NewZaws()
+			zaws.ShowElbList()
+		default:
+			usage()
+		}
 	case "cloudwatch":
 		switch os.Args[2] {
 		case "list":
@@ -230,16 +284,31 @@ func main() {
 			case "ec2":
 				os.Args = os.Args[3:]
 				zaws := NewZaws()
-				zaws.ShowCloudwatchMetricsList()
+				zaws.ShowEC2CloudwatchMetricsList()
 			case "rds":
 			case "elb":
+				os.Args = os.Args[3:]
+				zaws := NewZaws()
+				zaws.ShowELBCloudwatchMetricsList()
 			default:
 				usage()
 			}
 		case "stats":
-			os.Args = os.Args[2:]
-			zaws := NewZaws()
-			zaws.SendMetricStats()
+			if len(os.Args) < 4 {
+				usage()
+			}
+			switch os.Args[3] {
+			case "ec2":
+				os.Args = os.Args[3:]
+				zaws := NewZaws()
+				zaws.SendEc2MetricStats()
+			case "elb":
+				os.Args = os.Args[3:]
+				zaws := NewZaws()
+				zaws.SendElbMetricStats()
+			default:
+				usage()
+			}
 		default:
 			usage()
 		}
