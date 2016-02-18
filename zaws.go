@@ -103,7 +103,7 @@ func get_metric_list(sess *session.Session, identity_name, target_id string) []*
 	}
 	resp, err := svc.ListMetrics(params)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Printf("[ERROR] Fail ListMetrics API call: %s \n", err.Error())
 		return nil
 	}
 	return resp.Metrics
@@ -129,7 +129,7 @@ func get_metric_stats(sess *session.Session, identity_name, target_id, metric_na
 	}
 	value, err := svc.GetMetricStatistics(input)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Printf("[ERROR] Fail GetMetricStatistics API call: %s \n", err.Error())
 		return nil
 	}
 	return value.Datapoints
@@ -141,7 +141,7 @@ func get_ec2_list(sess *session.Session) []*ec2.Instance {
 	resp, err := svc.DescribeInstances(nil)
 
 	if err != nil {
-		fmt.Println("Error")
+		fmt.Printf("[ERROR] Fail DescribeInstances API call: %s \n", err.Error())
 		os.Exit(1)
 	}
 	for _, reservation := range resp.Reservations {
@@ -158,7 +158,7 @@ func get_elb_list(sess *session.Session) []*elb.LoadBalancerDescription {
 	resp, err := svc.DescribeLoadBalancers(params)
 
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Printf("[ERROR] Fail DescribeLoadBalancers API call: %s \n", err.Error())
 		return nil
 	}
 	return resp.LoadBalancerDescriptions
