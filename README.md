@@ -5,8 +5,12 @@ This template is supported over Zabbix 3.0.
 
 # Features
 
-* Automatically registration EC2 instances information by using Zabbix LLD host prototype.
-* Automatically registration EC2 CloudWatch metrics information by using Zabbix LLD item prototype.
+* EC2 monitoring
+    * Automatically registration EC2 instances information by using Zabbix LLD host prototype.
+    * Automatically registration EC2 CloudWatch metrics information by using Zabbix LLD item prototype.
+* ELB monitoring
+    * Automatically registration ELB instances information by using Zabbix LLD host prototype.
+    * Automatically registration ELB CloudWatch metrics information by using Zabbix LLD item prototype.
 
 # Requirements
 
