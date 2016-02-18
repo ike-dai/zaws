@@ -67,7 +67,7 @@
                     <host_prototypes>
                         <host_prototype>
                             <host>{#INSTANCE.ID}</host>
-                            <name>{#INSTANCE.NAME}</name>
+			    <name>{#INSTANCE.NAME}({#INSTANCE.ID})</name>
                             <status>0</status>
                             <group_links>
                                 <group_link>
