@@ -169,16 +169,19 @@ func (z *Zaws) ShowEc2List() {
 	list := make([]Data, 0)
 	instances := get_ec2_list(z.AwsSession)
 	for _, instance := range instances {
+		data := Data{InstanceType: *instance.InstanceType, InstanceId: *instance.InstanceId}
+		if instance.PrivateIpAddress != nil {
+			data.InstancePrivateAddr = *instance.PrivateIpAddress
+		}
 		for _, tag := range instance.Tags {
 			if *tag.Key == "Name" {
-				var private_addr string
-				if instance.PrivateIpAddress != nil {
-					private_addr = *instance.PrivateIpAddress
-				}
-				data := Data{InstanceName: *tag.Value, InstanceType: *instance.InstanceType, InstanceId: *instance.InstanceId, InstancePrivateAddr: private_addr}
-				list = append(list, data)
+				data.InstanceName = *tag.Value
 			}
 		}
+		if data.InstanceName == "" {
+			data.InstanceName = *instance.InstanceId
+		}
+		list = append(list, data)
 	}
 	fmt.Printf(convert_to_lldjson_string(list))
 }
