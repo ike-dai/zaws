@@ -179,7 +179,7 @@
             </applications>
             <items>
                 <item>
-                    <name>cloudwatch static monitor (EC2)</name>
+                    <name>cloudwatch stats monitor (EC2)</name>
                     <type>10</type>
                     <snmp_community/>
                     <multiplier>0</multiplier>
@@ -325,7 +325,7 @@
             </applications>
             <items>
                 <item>
-                    <name>cloudwatch static monitor (ELB)</name>
+                    <name>cloudwatch stats monitor (ELB)</name>
                     <type>10</type>
                     <snmp_community/>
                     <multiplier>0</multiplier>
