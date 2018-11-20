@@ -108,6 +108,26 @@ func get_metric_list(sess *session.Session, identity_name, target_id string) []*
 	}
 	return resp.Metrics
 }
+func get_metric_statistics(metric_name, metric_namespace string) *string {
+	sum_metric_list := []string{
+		"RequestCount",
+		"HTTPCode_Backend_2XX",
+		"HTTPCode_Backend_3XX",
+		"HTTPCode_Backend_4XX",
+		"HTTPCode_Backend_5XX",
+		"HTTPCode_ELB_4XX",
+		"HTTPCode_ELB_5XX",
+		"HTTPCode_ELB_5XX",
+	}
+	if metric_namespace == "AWS/ELB" {
+		for _, value := range sum_metric_list {
+			if value == metric_name {
+				return aws.String("Sum")
+			}
+		}
+	}
+	return aws.String("Average")
+}
 
 func get_metric_stats(sess *session.Session, identity_name, target_id, metric_name, metric_namespace string) []*cloudwatch.Datapoint {
 
@@ -115,7 +135,7 @@ func get_metric_stats(sess *session.Session, identity_name, target_id, metric_na
 	t := time.Now()
 	input := &cloudwatch.GetMetricStatisticsInput{
 		Namespace:  aws.String(metric_namespace),
-		Statistics: []*string{aws.String("Average")},
+		Statistics: []*string{get_metric_statistics(metric_name, metric_namespace)},
 		EndTime:    aws.Time(t),
 		Period:     aws.Int64(300),
 		StartTime:  aws.Time(t.Add(time.Duration(-10) * time.Minute)),
@@ -256,7 +276,13 @@ func (z *Zaws) SendMetricStats(identity_name string) {
 
 		if len(datapoints) > 0 {
 			data_time := *datapoints[0].Timestamp
-			send_data = append(send_data, zabbix_sender.DataItem{Hostname: z.TargetId, Key: "cloudwatch.metric[" + metric_name + "]", Value: strconv.FormatFloat(*datapoints[0].Average, 'f', 4, 64), Timestamp: data_time.Unix()})
+			var val float64
+			if datapoints[0].Average == (*float64)(nil) {
+				val = *datapoints[0].Sum
+			} else {
+				val = *datapoints[0].Average
+			}
+			send_data = append(send_data, zabbix_sender.DataItem{Hostname: z.TargetId, Key: "cloudwatch.metric[" + metric_name + "]", Value: strconv.FormatFloat(val, 'f', 4, 64), Timestamp: data_time.Unix()})
 		}
 	}
 	addr, _ := net.ResolveTCPAddr("tcp", z.ZabbixHost+":"+z.ZabbixPort)
